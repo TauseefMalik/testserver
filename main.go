@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	_ "errors"
 	"fmt"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/hashicorp/go-retryablehttp"
 	"io/ioutil"
 	"net/http"
 	"sort"
@@ -41,10 +41,10 @@ import (
 //“count”: <number of items> in the result,
 //}
 
-//1. The server should query URLs concurrently. (done)
+//1. The server should query URLs concurrently.
 //2. Server should have re-try mechanism and error handling on failures while querying URLs.
 //3. Code should have a decent amount of Test Coverage.
-//4. Provide README for testing and deployment. (done)
+//4. Provide README for testing and deployment.
 
 const (
 	YAHOO = "https://raw.githubusercontent.com/assignment132/assignment/main/duckduckgo.json"
@@ -98,11 +98,8 @@ func GetInfo(c echo.Context) (err error) {
 		allSiteInfo = append(allSiteInfo, item)
 	}
 	wg.Wait()
-
-	SortWebSites(c, key, allSiteInfo)
-	//for _, d := range allSiteInfo {
-	//	c.Logger().Debug(fmt.Sprintf("siteinfo %+v", d))
-	//}
+	c.Logger().Info(fmt.Sprintf("sorting by: %s", key))
+	SortWebSites(key, allSiteInfo)
 	c.Logger().Debug(fmt.Sprintf("len %d \n", len(allSiteInfo)))
 
 	if err != nil {
@@ -115,13 +112,11 @@ func GetInfo(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, Response{Data: allSiteInfo[:limit], Count: limit})
 }
 
-func SortWebSites(c echo.Context, key string, allSiteInfo []Info) {
+func SortWebSites(key string, allSiteInfo []Info) {
 	if key != "" && key == "views" {
-		c.Logger().Info(fmt.Sprintf("sort by views"))
 		sort.Sort(InfoByViews(allSiteInfo))
 	}
 	if key != "" && key == "relevanceScore" {
-		c.Logger().Info(fmt.Sprintf("sort by score"))
 		sort.Sort(InfoByScore(allSiteInfo))
 	}
 }
